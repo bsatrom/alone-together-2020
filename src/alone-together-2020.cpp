@@ -13,6 +13,7 @@
 #include <Grove_ChainableLED.h>
 #include <Debounce.h>
 
+void breatheLED();
 void handleMessage(const char *event, const char *data);
 void setup();
 void loop();
@@ -24,12 +25,39 @@ Debounce debouncer = Debounce();
 
 bool sent_message = false;
 
+void breatheLED() {
+    int ledNum = 0;
+    float hue = 0.0;
+    float saturation = 0.0;
+    float brightness = 0.0;
+
+    // Ramp up slowly to our final color
+    for (int i = 0; i < 10; i++) {
+        hue += 0.075;
+        saturation += 0.07;
+        brightness += 0.04;
+
+        led.setColorHSB(ledNum, hue, saturation, brightness);
+
+        delay(100);
+    }
+
+    // Ramp down slowly to turn the LED off
+    for (int i = 10; i > 0; i--) {
+        hue -= 0.075;
+        saturation -= 0.07;
+        brightness -= 0.04;
+
+        led.setColorHSB(ledNum, hue, saturation, brightness);
+
+        delay(100);
+    }
+}
+
 void handleMessage(const char *event, const char *data) {
-    led.setColorHSB(0, 0.0, 0.5, 0.5);
-
-    delay(3000);
-
-    led.setColorHSB(0, 0.0, 0.0, 0.0);
+    for (int i = 0; i < 3; i++) {
+        breatheLED();
+    }
 }
 
 void setup() {
@@ -47,15 +75,12 @@ void loop() {
     debouncer.update();
 
     if (debouncer.read() == HIGH) {
-        // led.setColorHSB(0, 0.0, 1.0, 0.6);
-
-        if (!sent_message) {
+       if (!sent_message) {
             sent_message = true;
 
             Particle.publish("alonetogether2020", NULL, PUBLIC);
         }
     } else {
-        // led.setColorHSB(0, 0.0, 0.0, 0.0);
         sent_message = false;
     }
 }
